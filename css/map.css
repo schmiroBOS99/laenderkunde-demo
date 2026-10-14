@@ -1,0 +1,76 @@
+.map-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.map-head h1 { margin: 0; font-size: 2rem; }
+
+.map-select {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--fg);
+  font-weight: 800;
+  box-shadow: 0 4px 0 var(--border);
+  max-width: 60%;
+  cursor: pointer;
+}
+
+.map-wrap {
+  position: relative;
+  background: #cfe7f7;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 0 var(--blue-dark);
+  overflow: hidden;
+}
+
+.map-svg { display: block; width: 100%; height: auto; cursor: grab; touch-action: none; }
+.map-svg:active { cursor: grabbing; }
+
+.land {
+  stroke: #ffffff;
+  stroke-width: .5;
+  vector-effect: non-scaling-stroke;
+}
+.land:hover { stroke: var(--fg); stroke-width: 1.5; }
+.punkt { stroke: #ffffff; stroke-width: 1; }
+
+.s-kein_wert { fill: #c9c2b8; background: #c9c2b8; }
+.s-keine_daten { fill: #f1ece5; background: #f1ece5; }
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 4px;
+}
+.map-legend li { display: flex; align-items: center; gap: 6px; font-size: .9rem; }
+.swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--border); }
+
+.map-tooltip {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  max-width: 240px;
+  padding: 8px 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+  font-size: .9rem;
+}
+.tip-status { margin-top: 4px; padding: 1px 6px; border-radius: 4px; display: inline-block; color: #fff; font-size: .8rem; }
+.tip-status.s-keine_daten, .tip-status.s-kein_wert, .tip-status.s-neu, .tip-status.s-gewusst { color: var(--fg); }
+
+.map-hint { color: var(--muted); font-size: .85rem; margin: 4px 0 0; }
+
+.map-head { flex-wrap: wrap; }
+.map-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex: 1 1 240px; min-width: 0; }
+.map-controls .map-select { max-width: 100%; min-width: 0; }
+.map-erklaerung { margin: 14px 0 0; }
+.map-erklaerung strong { font-weight: 900; }

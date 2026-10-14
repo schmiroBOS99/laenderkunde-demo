@@ -1,0 +1,50 @@
+.page-narrow > h1 { margin: 0 0 20px; font-size: 2rem; }
+
+.stat-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.stat-group {
+  margin: 18px 0 10px;
+  color: var(--muted);
+  font-size: .8rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.stat-group:first-of-type { margin-top: 4px; }
+.stat-row { display: flex; align-items: center; gap: 12px; }
+.stat-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--c);
+  box-shadow: 0 3px 0 var(--c-dark);
+  flex: none;
+}
+.stat-main { flex: 1; min-width: 0; }
+.stat-label { display: flex; justify-content: space-between; gap: 8px; font-weight: 800; margin-bottom: 4px; }
+.stat-zahl { color: var(--muted); font-variant-numeric: tabular-nums; }
+.stat-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--border);
+  overflow: hidden;
+}
+.stat-name { display: inline-flex; align-items: center; gap: 2px; }
+.stat-name .info-btn { width: 24px; height: 24px; }
+.stat-name .info-btn .icon { width: 17px; height: 17px; }
+
+.legend-mini { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); font-size: .85rem; }
+/* Farbe kommt aus .s-<stufe> (base.css); „Neu“ = leerer Balkenrest */
+.dot { width: 10px; height: 10px; border-radius: 50%; margin-left: 6px; }
+.dot.s-leer { background: var(--border); }
+
+.hint { color: var(--muted); margin: 0 0 14px; }
+.panel-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.danger { color: var(--bad-dark); }
+.panel-status { color: var(--bad-dark); margin: 12px 0 0; }
+.panel-status:empty { display: none; }
+
+@media (max-width: 480px) {
+  .legend-mini { display: none; }
+}

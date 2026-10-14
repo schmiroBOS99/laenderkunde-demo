@@ -1,0 +1,64 @@
+.menu h1 { margin: 0 0 20px; font-size: 2rem; }
+
+.menu fieldset { border: 0; min-width: 0; }
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.panel-head h2 { margin: 0; font-size: 1.2rem; }
+.panel-actions { display: flex; gap: 14px; }
+
+.pills { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.prop-group + .prop-group { margin-top: 16px; }
+.group-toggle {
+  display: block;
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.group-toggle:hover { color: var(--fg); text-decoration: underline; }
+
+.pill { position: relative; }
+.pill input { position: absolute; opacity: 0; pointer-events: none; }
+.pill-body {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  transition: background .1s, transform .08s;
+}
+.pill-body .icon { color: var(--c-dark); }
+.pill input:checked + .pill-body {
+  background: var(--c);
+  border-color: var(--c-dark);
+  color: var(--fg);
+  box-shadow: 0 3px 0 var(--c-dark);
+}
+.pill input:checked + .pill-body .icon { color: var(--fg); }
+/* Dunkelgrün (Gelernt) braucht helle Schrift */
+.pill input[value="gelernt"]:checked + .pill-body { color: #fff; }
+.pill input:focus-visible + .pill-body { outline: 3px solid var(--accent); outline-offset: 2px; }
+.pill-body:active { transform: translateY(2px); }
+
+.anzahl-anzeige { color: var(--muted); font-weight: 800; }
+.menu input[type="range"] { width: 100%; accent-color: var(--blue-dark); height: 28px; }
+
+.menu .start { margin-top: 8px; }

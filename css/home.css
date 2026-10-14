@@ -1,0 +1,61 @@
+.home-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.home-head h1 { margin: 0; font-size: 2rem; }
+.home-stat { text-align: right; color: var(--muted); font-size: .9rem; }
+.home-stat strong { display: block; color: var(--fg); font-size: 1.4rem; font-weight: 900; }
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.tile-group { display: grid; gap: 14px; }
+
+.tile {
+  display: grid;
+  place-items: center;
+  gap: 18px;
+  min-height: 260px;
+  padding: 28px 20px;
+  border-radius: var(--radius-lg);
+  background: var(--c);
+  box-shadow: 0 6px 0 var(--c-dark);
+  color: var(--fg);
+  text-decoration: none;
+  transition: transform .08s, box-shadow .08s;
+}
+.tile:hover { filter: brightness(1.03); }
+.tile:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--c-dark); }
+
+/* Symbol auf weißem, leicht gedrehtem "Kärtchen" wie bei Geotrivia */
+.tile-icon {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, .12);
+  color: var(--c-dark);
+  transform: rotate(-4deg);
+}
+.tile-icon .icon { width: 64px; height: 64px; stroke-width: 2; }
+.tile-title { font-size: 2rem; font-weight: 900; }
+
+.tile-subs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.tile-subs .btn { --c: inherit; --c-dark: inherit; }
+
+@media (max-width: 640px) {
+  .home-head h1 { font-size: 1.5rem; }
+  .tile { min-height: 180px; padding: 20px; }
+  .tile-icon { width: 84px; height: 84px; }
+  .tile-icon .icon { width: 48px; height: 48px; }
+  .tile-title { font-size: 1.6rem; }
+}
