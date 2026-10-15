@@ -17,8 +17,11 @@ export function parseZahl(text) {
 
 export const formatEingabe = x => zahlFmt.format(x);
 
-// Platzierung raten: richtig bei ±10 % des wahren Platzes, mindestens ±2 Plätze.
-export const RANG_SCHAETZEN = { einheit: 'Plätze', faktor: 1, relativ: 0.1, absolut: 2 };
+// Platzierung raten: feste Toleranz je Vergleichsgruppe (±5 % der Länderzahl, mind. ±2 Plätze),
+// z. B. weltweit ±10, Europa ±2. Fest statt relativ zum wahren Platz, damit der Hinweis nichts verrät.
+export const RANG_ANTEIL = 0.05;
+export const rangSchaetzen = anzahl =>
+  ({ einheit: 'Plätze', faktor: 1, absolut: Math.max(2, Math.round(RANG_ANTEIL * anzahl)) });
 
 // s = Schätz-Konfiguration ({ einheit, faktor, relativ?, absolut }), wahr in Eingabeeinheiten
 export function toleranz(s, wahr) {

@@ -7,7 +7,7 @@ import { propFarbe } from './theme.js';
 import { renderSummary } from './summary.js';
 import { infoButton } from './info.js';
 import { wertFormular, rangFormular } from './schaetzkarte.js';
-import { bereichText, RANG_SCHAETZEN } from '../data/schaetzen.js';
+import { bereichText } from '../data/schaetzen.js';
 
 const fmt = new Intl.NumberFormat('de-DE');
 
@@ -58,12 +58,14 @@ function card(country, prop, index, scope, alle, modus, onAnswer) {
     el('button', { type: 'button', class: 'btn btn-bad btn-nicht', 'aria-label': 'Nicht gewusst', onclick: () => answer(false) },
       icon('nein'), el('span', {}, 'Nicht gewusst')));
 
+  // Oben die Kategorie, unten die Wertung, dazwischen vertikal zentriert die Antwort.
   const back = el('div', { class: 'card-face card-back' },
     el('div', { class: 'card-label' }, icon(prop.key), prop.label),
-    el('div', { class: wert.length > 24 ? 'card-value long' : 'card-value' }, wert),
-    ergebnis,
-    ...(rank ? [el('div', { class: 'card-rank', title: prop.platz1 ? `Platz 1 = ${prop.platz1}` : '' },
-      formatRank(rank) + scope.suffix)] : []),
+    el('div', { class: 'card-mitte' },
+      el('div', { class: wert.length > 24 ? 'card-value long' : 'card-value' }, wert),
+      ergebnis,
+      ...(rank ? [el('div', { class: 'card-rank', title: prop.platz1 ? `Platz 1 = ${prop.platz1}` : '' },
+        formatRank(rank) + scope.suffix)] : [])),
     wertung);
 
   const fertig = (richtig, text) => {
@@ -72,7 +74,7 @@ function card(country, prop, index, scope, alle, modus, onAnswer) {
     answer(richtig);
   };
   let formular = null;
-  if (modus === 'platz' && rank) formular = rangFormular(prop, rank, RANG_SCHAETZEN, fertig);
+  if (modus === 'platz' && rank) formular = rangFormular(prop, rank, fertig);
   else if (modus !== 'platz' && prop.schaetzen) formular = wertFormular(country, prop, bereichText(alle, prop, '–'), fertig);
 
   let front;

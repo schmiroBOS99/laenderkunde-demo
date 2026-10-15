@@ -1,13 +1,13 @@
 // Kompakte Vorderseite einer Schätzkarte: Eingabe + Einheit + Pfeil (Prüfen), eine Hinweiszeile, „Weiß nicht“.
-// Wird für Werte (prop.schaetzen) und für Platzierungen (RANG_SCHAETZEN) genutzt.
-import { parseZahl, pruefe, formatEingabe, toleranzKurz, toleranzText } from '../data/schaetzen.js';
+// Wird für Werte (prop.schaetzen) und für Platzierungen (rangSchaetzen) genutzt.
+import { parseZahl, pruefe, formatEingabe, toleranzKurz, toleranzText, rangSchaetzen } from '../data/schaetzen.js';
 import { el } from './dom.js';
 import { icon } from './icons.js';
 
 const genau = new Intl.NumberFormat('de-DE', { maximumSignificantDigits: 6 });
 
 // opt: { prop, s (Schätz-Konfiguration), wahr (in Eingabeeinheiten), einheit (Anzeige neben dem Feld),
-//        hinweis (kurze Zeile), titel (Tooltip), vorschau?(x) → Text,
+//        hinweis (Bereich bzw. Platz 1), toleranz („Richtig bei …“), titel (Tooltip), vorschau?(x) → Text,
 //        alsText(x) → Schätzung für die Rückseite, abwEinheit (Einheit der Abweichung) }
 // onFertig(richtig, ergebnistext) nach Prüfen bzw. „Weiß nicht“.
 export function schaetzFormular(opt, onFertig) {
@@ -37,6 +37,7 @@ export function schaetzFormular(opt, onFertig) {
       el('button', { type: 'submit', class: 'schaetz-ok', 'aria-label': 'Prüfen', title: 'Prüfen (Enter)' }, icon('pfeil'))),
     vorschau,
     el('div', { class: 'schaetz-hinweis', title: opt.titel }, opt.hinweis),
+    el('div', { class: 'schaetz-toleranz' }, opt.toleranz),
     el('button', { type: 'button', class: 'schaetz-weiss-nicht',
       onclick: () => fertig(false, 'Keine Schätzung abgegeben') }, 'Weiß nicht'));
 
@@ -66,7 +67,8 @@ export function wertFormular(country, prop, bereich, onFertig) {
     prop, s,
     wahr: country[prop.key] / s.faktor,
     einheit: s.einheit,
-    hinweis: `${bereich} · ${toleranzKurz(s)}`,
+    hinweis: `Bereich ${bereich}`,
+    toleranz: `Richtig bei ${toleranzKurz(s)}`,
     titel: `Wertebereich ${bereich}, richtig bei ${toleranzText(s)}`,
     alsText: x => `${formatEingabe(x)} ${s.einheit}`,
     abwEinheit: s.einheit,
@@ -76,12 +78,14 @@ export function wertFormular(country, prop, bereich, onFertig) {
 }
 
 // Platzierung schätzen, z. B. „Platz ? von 193“
-export function rangFormular(prop, rang, s, onFertig) {
+export function rangFormular(prop, rang, onFertig) {
+  const s = rangSchaetzen(rang.von);
   return schaetzFormular({
     prop, s,
     wahr: rang.platz,
     einheit: `von ${rang.von}`,
-    hinweis: `Platz 1 = ${prop.platz1 || 'höchster Wert'} · ${toleranzKurz(s)}, mind. ${s.absolut} Plätze`,
+    hinweis: `Platz 1 = ${prop.platz1 || 'höchster Wert'}`,
+    toleranz: `Richtig bei ±${s.absolut} Plätzen`,
     titel: `Platz 1 bis ${rang.von}, richtig bei ${toleranzText(s)}`,
     alsText: x => `Platz ${formatEingabe(x)}`,
     abwEinheit: n => (n === 1 ? 'Platz' : 'Plätze'),
