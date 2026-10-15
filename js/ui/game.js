@@ -6,7 +6,8 @@ import { icon } from './icons.js';
 import { propFarbe } from './theme.js';
 import { renderSummary } from './summary.js';
 import { infoButton } from './info.js';
-import { schaetzFormular } from './schaetzkarte.js';
+import { wertFormular, rangFormular } from './schaetzkarte.js';
+import { bereichText, RANG_SCHAETZEN } from '../data/schaetzen.js';
 
 const fmt = new Intl.NumberFormat('de-DE');
 
@@ -32,42 +33,14 @@ function rankScope(data, kontinente) {
   return { key: [...kontinente].sort().join(','), countries, suffix };
 }
 
-// onAnswer(gewusst, korrektur): korrektur = true, wenn eine Antwort geändert wird.
-// Zahl-Eigenschaften mit "schaetzen": Vorderseite mit Eingabefeld, automatische Wertung (änderbar).
-function card(country, prop, index, scope, alle, onAnswer) {
-  const style = propFarbe(prop, index);
+// Eine Karte. Alle Karten sind gleich groß; die Wertung (✓/✗) sitzt unten auf der Rückseite.
+// modus "wert": Zahlen mit "schaetzen" als Wert-Schätzung, sonst Umdrehen.
+// modus "platz": alle Zahlen (auch Erhebung, Fluss) als Platz-Schätzung, Texte zum Umdrehen.
+// onAnswer(gewusst, korrektur): korrektur = true, wenn eine Wertung geändert wird.
+function card(country, prop, index, scope, alle, modus, onAnswer) {
   const rank = getRank(scope.countries, prop, country.iso3, scope.key);
   const wert = formatValue(country, prop) ?? '–';
-  const back = el('div', { class: 'card-face card-back' },
-    el('div', { class: 'card-label' }, icon(prop.key), prop.label),
-    el('div', { class: wert.length > 24 ? 'card-value long' : 'card-value' }, wert));
-  if (rank) back.append(el('div', { class: 'card-rank' }, formatRank(rank) + scope.suffix));
-  if (rank && prop.platz1) back.append(el('div', { class: 'card-hint' }, `Platz 1 = ${prop.platz1}`));
-
-  let inner;
-  let eingabe = null;
-  if (prop.schaetzen) {
-    const ergebnis = el('div', { class: 'card-schaetzung' });
-    back.children[1].after(ergebnis);
-    const s = schaetzFormular(country, prop, alle, (richtig, text) => {
-      ergebnis.textContent = text;
-      box.classList.add('flipped');
-      answer(richtig);
-    });
-    eingabe = s.input;
-    inner = el('div', { class: 'card-inner' }, s.form, back);
-  } else {
-    inner = el('button', { type: 'button', class: 'card-inner', 'aria-label': `${prop.label} aufdecken`,
-      onclick: () => box.classList.toggle('flipped') },
-      el('div', { class: 'card-face card-front' },
-        el('span', { class: 'card-icon' }, icon(prop.key)),
-        el('div', { class: 'card-label' }, prop.label)),
-      back);
-  }
-  // Info-Knopf liegt über der Karte (nicht im Umdreh-Knopf, verschachtelte Buttons sind ungültig).
-  const box = el('div', { class: prop.schaetzen ? 'card card-schaetzen' : 'card', style },
-    el('div', { class: 'card-stage' }, inner, infoButton(prop, index)));
-  box.eingabe = eingabe;
+  const ergebnis = el('div', { class: 'card-schaetzung' });
 
   let antwort = null;
   const answer = gewusst => {
@@ -79,19 +52,54 @@ function card(country, prop, index, scope, alle, onAnswer) {
     box.classList.toggle('is-nicht-gewusst', !gewusst);
     onAnswer(gewusst, korrektur);
   };
-  const actions = el('div', { class: 'card-actions' },
+  const wertung = el('div', { class: 'card-wertung' },
     el('button', { type: 'button', class: 'btn btn-ok btn-gewusst', 'aria-label': 'Gewusst', onclick: () => answer(true) },
       icon('ja'), el('span', {}, 'Gewusst')),
     el('button', { type: 'button', class: 'btn btn-bad btn-nicht', 'aria-label': 'Nicht gewusst', onclick: () => answer(false) },
       icon('nein'), el('span', {}, 'Nicht gewusst')));
-  box.append(actions);
+
+  const back = el('div', { class: 'card-face card-back' },
+    el('div', { class: 'card-label' }, icon(prop.key), prop.label),
+    el('div', { class: wert.length > 24 ? 'card-value long' : 'card-value' }, wert),
+    ergebnis,
+    ...(rank ? [el('div', { class: 'card-rank', title: prop.platz1 ? `Platz 1 = ${prop.platz1}` : '' },
+      formatRank(rank) + scope.suffix)] : []),
+    wertung);
+
+  const fertig = (richtig, text) => {
+    ergebnis.textContent = text;
+    box.classList.add('flipped');
+    answer(richtig);
+  };
+  let formular = null;
+  if (modus === 'platz' && rank) formular = rangFormular(prop, rank, RANG_SCHAETZEN, fertig);
+  else if (modus !== 'platz' && prop.schaetzen) formular = wertFormular(country, prop, bereichText(alle, prop, '–'), fertig);
+
+  let front;
+  if (formular) {
+    front = formular.form;
+  } else {
+    front = el('button', { type: 'button', class: 'card-face card-front', 'aria-label': `${prop.label} aufdecken`,
+      onclick: () => box.classList.add('flipped') },
+      el('span', { class: 'card-icon' }, icon(prop.key)),
+      el('div', { class: 'card-label' }, prop.label));
+    // Rückseite antippen dreht zurück (außer auf den Wertungsknöpfen)
+    back.addEventListener('click', e => { if (!e.target.closest('button')) box.classList.remove('flipped'); });
+  }
+
+  // Info-Knopf liegt über der Karte, nicht in einem anderen Knopf (verschachtelte Buttons sind ungültig).
+  const box = el('div', { class: 'card', style: propFarbe(prop, index) },
+    el('div', { class: 'card-inner' }, front, back),
+    infoButton(prop, index));
+  box.eingabe = formular?.input ?? null;
   return box;
 }
 
 // session: [{ iso3, props: [key] }]
 // hooks: { onAnswer(iso3, key, gewusst), onRevise(iso3, key, gewusst), onMenu() }
 // kontinente: Kontinentfilter der Runde (Rang nur innerhalb dieser Kontinente), null = Welt
-export function renderGame(root, data, session, hooks, kontinente = null) {
+// modus: "wert" (Werte schätzen) | "platz" (Platzierung schätzen)
+export function renderGame(root, data, session, hooks, kontinente = null, modus = 'wert') {
   const props = new Map(data.properties.map(p => [p.key, p]));
   const indices = new Map(data.properties.map((p, idx) => [p.key, idx]));
   const scope = rankScope(data, kontinente);
@@ -100,7 +108,7 @@ export function renderGame(root, data, session, hooks, kontinente = null) {
   let i = 0;
 
   const finish = () => renderSummary(root, data, results, {
-    onRepeat: s => renderGame(root, data, s, hooks, kontinente),
+    onRepeat: s => renderGame(root, data, s, hooks, kontinente, modus),
     onMenu: hooks.onMenu,
   });
 
@@ -121,7 +129,7 @@ export function renderGame(root, data, session, hooks, kontinente = null) {
     // Nach einer Schätzung springt der Fokus ins nächste offene Eingabefeld (flüssig per Tastatur).
     const naechsteEingabe = () => cards.find(c => c.eingabe && !c.eingabe.disabled)?.eingabe;
 
-    const cards = keys.map(key => card(country, props.get(key), indices.get(key), scope, data.countries,
+    const cards = keys.map(key => card(country, props.get(key), indices.get(key), scope, data.countries, modus,
       (gewusst, korrektur) => {
         if (korrektur) {
           results.find(r => r.iso3 === iso3 && r.key === key).gewusst = gewusst;

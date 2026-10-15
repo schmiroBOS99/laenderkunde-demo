@@ -11,6 +11,7 @@
 }
 .panel-head h2 { margin: 0; font-size: 1.2rem; }
 .panel-actions { display: flex; gap: 14px; }
+.panel-hinweis { margin: 10px 0 0; color: var(--muted); font-size: .88rem; }
 
 .pills { display: flex; flex-wrap: wrap; gap: 10px; }
 

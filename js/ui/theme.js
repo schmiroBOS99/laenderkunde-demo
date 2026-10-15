@@ -27,6 +27,8 @@ const PROP = {
   bip_kopf: 'green',
   temperatur: 'coral',
   fifa: 'green',
+  staatsoberhaupt: 'yellow',
+  regierungschef: 'pink',
   niederschlag: 'blue',
   wohneigentum: 'orange',
 };

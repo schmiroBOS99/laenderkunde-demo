@@ -7,7 +7,11 @@ export const DEFAULTS = {
   nurUN: true,
   lernstand: ['neu', 'nicht_gewusst', 'gewusst', 'gelernt'],
   anzahl: 10,
+  modus: 'wert',              // "wert" = Werte schätzen, "platz" = Platzierung schätzen
 };
+
+// Beim ersten Start vorausgewählt
+const START_GRUPPE = 'Steckbrief';
 
 export function loadSettings() {
   try {
@@ -24,8 +28,10 @@ export function loadSettings() {
 
 // Gewählte Eigenschaften; Eigenschaften, die beim Speichern noch unbekannt waren, sind automatisch gewählt.
 // Ältere Einstellungen ohne "bekannt": alles Nicht-Gewählte gilt als neu (einmalig wieder angehakt).
-export function selectedProps(settings, alleKeys) {
-  if (!settings.eigenschaften) return alleKeys;
+// Erster Start (nichts gespeichert): nur die Steckbrief-Eigenschaften.
+export function selectedProps(settings, properties) {
+  const alleKeys = properties.map(p => p.key);
+  if (!settings.eigenschaften) return properties.filter(p => p.gruppe === START_GRUPPE).map(p => p.key);
   const bekannt = settings.bekannt ?? settings.eigenschaften;
   return alleKeys.filter(k => settings.eigenschaften.includes(k) || !bekannt.includes(k));
 }

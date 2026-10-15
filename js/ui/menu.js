@@ -64,18 +64,19 @@ const checked = (form, name) =>
   [...form.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value);
 
 // Sitzung direkt aus den gespeicherten Einstellungen (Schnellstart), optional mit Abweichungen.
-// Liefert { session, kontinente }.
+// Liefert { session, kontinente, modus }.
 export function sessionFromSettings(data, overrides = {}) {
   const s = { ...loadSettings(), ...overrides };
-  s.eigenschaften = selectedProps(s, data.properties.map(p => p.key));
+  s.eigenschaften = selectedProps(s, data.properties);
   s.kontinente ??= KONTINENT_ORDNUNG;
   return {
     session: pickSession(availableCountries(data, s, loadProgress()), s.anzahl, loadVerlauf()),
     kontinente: s.kontinente,
+    modus: s.modus,
   };
 }
 
-// hooks: { onStart(session, kontinente) }
+// hooks: { onStart(session, kontinente, modus) }
 export function renderMenu(root, data, hooks) {
   const s = loadSettings();
   const progress = loadProgress();
@@ -85,7 +86,15 @@ export function renderMenu(root, data, hooks) {
 
   const form = el('form', { class: 'menu page-narrow' },
     el('h1', {}, 'Lernrunde einstellen'),
-    propPanel(data.properties, selectedProps(s, alleProps)),
+    propPanel(data.properties, selectedProps(s, data.properties)),
+    el('fieldset', { class: 'panel' },
+      el('div', { class: 'panel-head' }, el('h2', {}, 'Abfrage')),
+      el('div', { class: 'pills' },
+        pill('radio', 'modus', { value: 'wert', label: 'Werte schätzen', style: farbe('blue') }, s.modus !== 'platz'),
+        pill('radio', 'modus', { value: 'platz', label: 'Platzierung schätzen', style: farbe('blue') }, s.modus === 'platz')),
+      el('p', { class: 'panel-hinweis' },
+        'Bei „Platzierung schätzen“ rätst du bei allen Zahlen (auch Erhebung und Fluss) den Rang statt des Werts. ' +
+        'Texte wie Hauptstadt oder Sprache werden immer umgedreht.')),
     pillGroup('Kontinente', 'kontinent',
       kontinente.map(k => ({ value: k, label: k, style: farbe('teal') })),
       s.kontinente ?? kontinente, true),
@@ -114,6 +123,7 @@ export function renderMenu(root, data, hooks) {
     bekannt: alleProps,
     kontinente: checked(form, 'kontinent'),
     nurUN: form.querySelector('input[name="un"]:checked').value === 'un',
+    modus: form.querySelector('input[name="modus"]:checked').value,
     lernstand: checked(form, 'lernstand'),
     anzahl: wunsch,
   });
@@ -136,7 +146,8 @@ export function renderMenu(root, data, hooks) {
   form.addEventListener('change', update);
   form.addEventListener('submit', e => {
     e.preventDefault();
-    hooks.onStart(pickSession(available, Number(slider.value), loadVerlauf()), checked(form, 'kontinent'));
+    hooks.onStart(pickSession(available, Number(slider.value), loadVerlauf()), checked(form, 'kontinent'),
+      form.querySelector('input[name="modus"]:checked').value);
   });
 
   root.replaceChildren(form);

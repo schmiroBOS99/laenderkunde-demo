@@ -3,7 +3,7 @@ import { el } from './dom.js';
 import { icon } from './icons.js';
 import { propFarbe, gruppiert, STATUS } from './theme.js';
 import { GELERNT_AB } from '../storage/progress.js';
-import { bereichText, wertebereich, toleranzText } from '../data/schaetzen.js';
+import { bereichText, wertebereich, toleranzText, RANG_SCHAETZEN } from '../data/schaetzen.js';
 
 // Daten für Wertebereiche; wird einmal beim Start gesetzt.
 let daten = null;
@@ -32,7 +32,8 @@ function oeffne(titel, ...inhalt) {
 export function zeigeEigenschaft(prop, index = 0) {
   const fakten = [
     ['Wertebereich', bereichMitLaendern(prop)],
-    ['Schätzung richtig bei', prop.schaetzen && toleranzText(prop)],
+    ['Schätzung richtig bei', prop.schaetzen && toleranzText(prop.schaetzen)],
+    ['Platzierung richtig bei', prop.typ === 'zahl' && toleranzText(RANG_SCHAETZEN)],
     ['Platz 1', prop.platz1],
     ['Einheit', prop.einheit],
     ['Quelle', prop.quelle],
@@ -79,6 +80,7 @@ export function zeigeAppInfo() {
     el('ul', {},
       el('li', {}, 'Unter „Lernen“ wählst du Kategorien, Kontinente, Lernstand und Anzahl der Länder.'),
       el('li', {}, 'Zu jedem Land erscheint pro Kategorie eine Karte. Bei Zahlen gibst du eine Schätzung ein: Liegt sie innerhalb der Toleranz (steht auf der Karte), zählt sie als gewusst. Bei Texten (Hauptstadt, Berg, Fluss, Sprache, Religion) überlegst du die Antwort, drehst die Karte um und markierst ehrlich „Gewusst“ oder „Nicht gewusst“. Die Wertung lässt sich nachträglich ändern.'),
+      el('li', {}, 'Unter „Abfrage“ kannst du statt der Werte die Platzierung schätzen (z. B. „Platz ? von 193“). Das gilt für alle Zahlen, auch für Erhebung und Fluss. Richtig bei ±10 % des wahren Platzes, mindestens ±2 Plätze.'),
       el('li', {}, '„Schnellstart“ startet mit den zuletzt gewählten Einstellungen, „Fehler üben“ nur mit nicht gewussten Karten.'),
       el('li', {}, 'Der Rang zeigt die Position unter allen Ländern, mit Kontinentfilter nur innerhalb der gewählten Kontinente. Platz 1 ist der höchste Wert, bei der FIFA-Weltrangliste das beste Team.')),
     el('h3', {}, 'Lernstand'),

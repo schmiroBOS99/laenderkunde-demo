@@ -29,15 +29,15 @@ async function init() {
   const data = await loadData();
   setzeDaten(data);
 
-  const play = (session, kontinente) => {
+  const play = (session, kontinente, modus) => {
     if (session.length === 0) return alert('Keine passenden Karten gefunden.');
     merkeVerlauf(session.map(s => s.iso3));
     renderGame(root, data, session,
-      { onAnswer: recordAnswer, onRevise: reviseAnswer, onMenu: () => go('#/') }, kontinente);
+      { onAnswer: recordAnswer, onRevise: reviseAnswer, onMenu: () => go('#/') }, kontinente, modus);
   };
   const playSettings = overrides => {
-    const { session, kontinente } = sessionFromSettings(data, overrides);
-    play(session, kontinente);
+    const { session, kontinente, modus } = sessionFromSettings(data, overrides);
+    play(session, kontinente, modus);
   };
 
   const routes = {

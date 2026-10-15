@@ -15,30 +15,29 @@ export function parseZahl(text) {
   return /^-?\d*\.?\d+$/.test(t) ? Number(t) : NaN;
 }
 
-export const inEingabe = (prop, wert) => wert / prop.schaetzen.faktor;
 export const formatEingabe = x => zahlFmt.format(x);
 
-export function toleranz(prop, wahr) {
-  const s = prop.schaetzen;
+// Platzierung raten: richtig bei ±10 % des wahren Platzes, mindestens ±2 Plätze.
+export const RANG_SCHAETZEN = { einheit: 'Plätze', faktor: 1, relativ: 0.1, absolut: 2 };
+
+// s = Schätz-Konfiguration ({ einheit, faktor, relativ?, absolut }), wahr in Eingabeeinheiten
+export function toleranz(s, wahr) {
   return Math.max((s.relativ ?? 0) * Math.abs(wahr), s.absolut ?? 0);
 }
 
-// z. B. "±10 % (mind. ±0,05 Mio.)" oder "±8 von 100"
-export function toleranzText(prop) {
-  const s = prop.schaetzen;
+// Lang: "±10 % (mind. ±0,05 Mio.)" bzw. "±8 von 100"; kurz (Karte): "±10 %" bzw. "±8"
+export function toleranzText(s) {
   const abs = `±${genauFmt.format(s.absolut)} ${s.einheit}`;
   return s.relativ ? `±${pctFmt.format(s.relativ)} (mind. ${abs})` : abs;
 }
+export function toleranzKurz(s) {
+  return s.relativ ? `±${pctFmt.format(s.relativ)}` : `±${genauFmt.format(s.absolut)}`;
+}
 
-// Prüft eine Schätzung (Eingabeeinheiten); liefert { richtig, abweichung, relativ }.
-export function pruefe(prop, wert, schaetzung) {
-  const wahr = inEingabe(prop, wert);
+// Prüft eine Schätzung; wahr und schaetzung in Eingabeeinheiten. Liefert { richtig, abweichung }.
+export function pruefe(s, wahr, schaetzung) {
   const abweichung = schaetzung - wahr;
-  return {
-    richtig: Math.abs(abweichung) <= toleranz(prop, wahr) + 1e-9,
-    abweichung,
-    relativ: wahr !== 0 ? abweichung / Math.abs(wahr) : null,
-  };
+  return { richtig: Math.abs(abweichung) <= toleranz(s, wahr) + 1e-9, abweichung };
 }
 
 // Kleinster und größter Wert aller Länder (mit Ländernamen), gecacht je Eigenschaft.
@@ -54,12 +53,14 @@ export function wertebereich(countries, prop) {
   return bereichCache.get(prop.key);
 }
 
-// "0,00044 bis 17.100 Tsd. km²" (in Eingabeeinheit, sonst in der normalen Einheit)
-export function bereichText(countries, prop) {
+// "0,00044 bis 17.100 Tsd. km²" (in Eingabeeinheit, sonst in der normalen Einheit); trenner z. B. "–"
+export function bereichText(countries, prop, trenner = ' bis ') {
   const b = wertebereich(countries, prop);
   if (!b) return '';
   const f = prop.schaetzen?.faktor ?? 1;
-  if (prop.vorsatz) return `${prop.vorsatz}${formatEingabe(b.min / f)} bis ${formatEingabe(b.max / f)}`;
+  const von = formatEingabe(b.min / f);
+  const bis = formatEingabe(b.max / f);
+  if (prop.vorsatz) return `${prop.vorsatz}${von}${trenner}${bis}`;
   const einheit = prop.schaetzen?.einheit ?? prop.einheit ?? '';
-  return `${formatEingabe(b.min / f)} bis ${formatEingabe(b.max / f)}${einheit ? ' ' + einheit : ''}`;
+  return `${von}${trenner}${bis}${einheit ? ' ' + einheit : ''}`;
 }

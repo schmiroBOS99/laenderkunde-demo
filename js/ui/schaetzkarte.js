@@ -1,59 +1,89 @@
-// Vorderseite einer Schätzkarte: Zahl eingeben (in der Eingabeeinheit), prüfen oder „Weiß nicht“.
-import { parseZahl, pruefe, formatEingabe, toleranzText, bereichText } from '../data/schaetzen.js';
+// Kompakte Vorderseite einer Schätzkarte: Eingabe + Einheit + Pfeil (Prüfen), eine Hinweiszeile, „Weiß nicht“.
+// Wird für Werte (prop.schaetzen) und für Platzierungen (RANG_SCHAETZEN) genutzt.
+import { parseZahl, pruefe, formatEingabe, toleranzKurz, toleranzText } from '../data/schaetzen.js';
 import { el } from './dom.js';
 import { icon } from './icons.js';
 
 const genau = new Intl.NumberFormat('de-DE', { maximumSignificantDigits: 6 });
 
-// onFertig(richtig, ergebnistext) wird nach Prüfen bzw. „Weiß nicht“ aufgerufen.
-export function schaetzFormular(country, prop, countries, onFertig) {
-  const s = prop.schaetzen;
+// opt: { prop, s (Schätz-Konfiguration), wahr (in Eingabeeinheiten), einheit (Anzeige neben dem Feld),
+//        hinweis (kurze Zeile), titel (Tooltip), vorschau?(x) → Text,
+//        alsText(x) → Schätzung für die Rückseite, abwEinheit (Einheit der Abweichung) }
+// onFertig(richtig, ergebnistext) nach Prüfen bzw. „Weiß nicht“.
+export function schaetzFormular(opt, onFertig) {
+  const { prop, s } = opt;
   const input = el('input', {
     type: 'text', inputMode: 'decimal', autocomplete: 'off', class: 'schaetz-input', placeholder: '?',
-    'aria-label': `${prop.label} schätzen in ${s.einheit}`,
+    'aria-label': `${prop.label}: ${opt.einheit}`,
   });
-  // Umrechnung in die normale Einheit, z. B. 0,00044 Tsd. km² → „= 0,44 km²“
   const vorschau = el('div', { class: 'schaetz-vorschau' });
-  const meldung = el('div', { class: 'schaetz-meldung' });
 
   input.addEventListener('input', () => {
-    meldung.textContent = '';
+    vorschau.classList.remove('fehler');
     const x = parseZahl(input.value);
-    vorschau.textContent = s.faktor !== 1 && Number.isFinite(x)
-      ? `= ${genau.format(x * s.faktor)}${prop.einheit ? ' ' + prop.einheit : ''}` : '';
+    vorschau.textContent = opt.vorschau && Number.isFinite(x) ? opt.vorschau(x) : '';
   });
 
   const fertig = (richtig, text) => {
-    input.disabled = true;
-    form.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    form.querySelectorAll('input, button').forEach(e => { e.disabled = true; });
     onFertig(richtig, text);
   };
 
   const form = el('form', { class: 'card-face card-front schaetz-front', novalidate: true },
-    el('div', { class: 'schaetz-titel' }, icon(prop.key), prop.label),
-    el('div', { class: 'schaetz-zeile' }, input, el('span', { class: 'schaetz-einheit' }, s.einheit)),
+    el('div', { class: 'schaetz-titel' }, icon(prop.key), el('span', {}, prop.label)),
+    el('div', { class: 'schaetz-zeile' },
+      input,
+      el('span', { class: 'schaetz-einheit' }, opt.einheit),
+      el('button', { type: 'submit', class: 'schaetz-ok', 'aria-label': 'Prüfen', title: 'Prüfen (Enter)' }, icon('pfeil'))),
     vorschau,
-    meldung,
-    el('div', { class: 'schaetz-hinweis' },
-      `Bereich ${bereichText(countries, prop)}`, el('br'), `Richtig bei ${toleranzText(prop)}`),
-    el('div', { class: 'schaetz-knoepfe' },
-      el('button', { type: 'submit', class: 'btn btn-primary' }, 'Prüfen'),
-      el('button', { type: 'button', class: 'btn', onclick: () => fertig(false, 'Keine Schätzung abgegeben') },
-        'Weiß nicht')));
+    el('div', { class: 'schaetz-hinweis', title: opt.titel }, opt.hinweis),
+    el('button', { type: 'button', class: 'schaetz-weiss-nicht',
+      onclick: () => fertig(false, 'Keine Schätzung abgegeben') }, 'Weiß nicht'));
 
   form.addEventListener('submit', e => {
     e.preventDefault();
     const x = parseZahl(input.value);
     if (!Number.isFinite(x)) {
-      meldung.textContent = 'Bitte eine Zahl eingeben.';
+      vorschau.textContent = 'Bitte eine Zahl eingeben.';
+      vorschau.classList.add('fehler');
       input.focus();
       return;
     }
-    const r = pruefe(prop, country[prop.key], x);
+    const r = pruefe(s, opt.wahr, x);
     const vz = r.abweichung > 0 ? '+' : r.abweichung < 0 ? '−' : '±';
-    fertig(r.richtig,
-      `Deine Schätzung: ${formatEingabe(x)} ${s.einheit} · Abweichung ${vz}${formatEingabe(Math.abs(r.abweichung))} ${s.einheit}`);
+    const abs = Math.abs(r.abweichung);
+    const einheit = typeof opt.abwEinheit === 'function' ? opt.abwEinheit(abs) : opt.abwEinheit;
+    fertig(r.richtig, `Deine Schätzung: ${opt.alsText(x)} · Abweichung ${vz}${formatEingabe(abs)} ${einheit}`);
   });
 
   return { form, input };
+}
+
+// Wert schätzen (Feld "schaetzen"), z. B. Einwohner in Mio.
+export function wertFormular(country, prop, bereich, onFertig) {
+  const s = prop.schaetzen;
+  return schaetzFormular({
+    prop, s,
+    wahr: country[prop.key] / s.faktor,
+    einheit: s.einheit,
+    hinweis: `${bereich} · ${toleranzKurz(s)}`,
+    titel: `Wertebereich ${bereich}, richtig bei ${toleranzText(s)}`,
+    alsText: x => `${formatEingabe(x)} ${s.einheit}`,
+    abwEinheit: s.einheit,
+    // Umrechnung in die normale Einheit, z. B. 0,00044 Tsd. km² → „= 0,44 km²“
+    vorschau: s.faktor !== 1 ? x => `= ${genau.format(x * s.faktor)}${prop.einheit ? ' ' + prop.einheit : ''}` : null,
+  }, onFertig);
+}
+
+// Platzierung schätzen, z. B. „Platz ? von 193“
+export function rangFormular(prop, rang, s, onFertig) {
+  return schaetzFormular({
+    prop, s,
+    wahr: rang.platz,
+    einheit: `von ${rang.von}`,
+    hinweis: `Platz 1 = ${prop.platz1 || 'höchster Wert'} · ${toleranzKurz(s)}, mind. ${s.absolut} Plätze`,
+    titel: `Platz 1 bis ${rang.von}, richtig bei ${toleranzText(s)}`,
+    alsText: x => `Platz ${formatEingabe(x)}`,
+    abwEinheit: n => (n === 1 ? 'Platz' : 'Plätze'),
+  }, onFertig);
 }
