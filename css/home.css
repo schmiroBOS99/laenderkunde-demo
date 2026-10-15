@@ -34,7 +34,7 @@
 .tile:hover { filter: brightness(1.03); }
 .tile:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--c-dark); }
 
-/* Symbol auf weißem, leicht gedrehtem "Kärtchen" wie bei Geotrivia */
+/* Symbol auf weißem, leicht gedrehtem "Kärtchen" */
 .tile-icon {
   display: grid;
   place-items: center;
